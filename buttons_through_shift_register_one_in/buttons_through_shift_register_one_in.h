@@ -84,5 +84,4 @@ private:
     // Для создания задачи.
     USER_OS_STATIC_STACK_TYPE           task_stack[ BUTTONS_THROUGH_SHIFT_REGISTER_ONE_IN_TASK_STACK_SIZE ] = { 0 };
     USER_OS_STATIC_TASK_STRUCT_TYPE     task_struct = USER_OS_STATIC_TASK_STRUCT_INIT_VALUE;
-
 };
