@@ -20,9 +20,8 @@ bool buttons_through_shift_register_one_in::check_press ( void ) {
 
 // Обработать нажатую клавишу.
 void buttons_through_shift_register_one_in::process_press ( const uint32_t &b_number ) {
-    // Для удобства записи.
-    sr_one_in_button_status_struct* s       = this->cfg->p_pin_conf_array->status;
-    sr_one_in_button_item_cfg*      p_st    = this->cfg->p_pin_conf_array;
+    sr_one_in_button_status_struct* s       = this->cfg->p_pin_conf_array[ b_number ].status; // Для удобства записи.
+    sr_one_in_button_item_cfg*      p_st    = &this->cfg->p_pin_conf_array[ b_number ];
 
     if ( s->press == false ) {  // Если до этого момента кнопка была сброшена.
         s->press        = true;                                                                 // Показываем, что нажатие произошло.
@@ -40,7 +39,7 @@ void buttons_through_shift_register_one_in::process_press ( const uint32_t &b_nu
                 if ( p_st->s_press != nullptr )
                     USER_OS_GIVE_BIN_SEMAPHORE( *p_st->s_press );
                 if ( p_st->q_press != nullptr )
-                    USER_OS_QUEUE_SEND( *q_press, &v_press, 0 );                                // Кладем в очеред без ожидания.
+                    USER_OS_QUEUE_SEND( *p_st->q_press, &p_st->v_press, 0 );                    // Кладем в очеред без ожидания.
             }
         } else {                        // Если проверка на дребезг уже прошла, при этом клавишу еще держат.
             if ( p_st->dl_delay_ms == 0 ) return;                                               // Если мы не отслеживаем длительное нажатие - выходим.
@@ -52,15 +51,40 @@ void buttons_through_shift_register_one_in::process_press ( const uint32_t &b_nu
             if ( p_st->s_start_long_press != nullptr )
                 USER_OS_GIVE_BIN_SEMAPHORE( *p_st->s_start_long_press );
             if ( p_st->q_start_long_press != nullptr )
-                USER_OS_QUEUE_SEND( *q_start_long_press, &v_start_long_press, 0 );                                // Кладем в очеред без ожидания.
-
+                USER_OS_QUEUE_SEND( *p_st->q_start_long_press, &p_st->v_start_long_press, 0 );
         }
     }
 }
 
 // Обработать отпущенную клавишу.
 void buttons_through_shift_register_one_in::process_not_press ( const uint32_t &b_number ) {
+    sr_one_in_button_status_struct* s       = this->cfg->p_pin_conf_array[ b_number ].status;
+    sr_one_in_button_item_cfg*      p_st    = &this->cfg->p_pin_conf_array[ b_number ];
 
+    if ( s->press == false ) return;                                                            // Если она и до этого была отпущена - выходим.
+    if ( s->bounce == true ) {                                                                  // Если кнопка проходила проверку на дребезг, но не прошла.
+        s->press                    = false;                                                    // Сбрасываем все состояния. Кнопка проверку не прошла.
+        s->bounce                   = false;
+        s->event_bounce             = false;
+        s->event_long_click         = false;
+        s->bounce_time              = 0;
+        s->button_long_click_time   = 0;
+        return;
+    }
+    // Если проверку состояния мы все-таки прошли.
+    if ( s->event_long_click == true ) {                                                        // Если произошло длительное нажатие.
+        // Информируем пользователя, если он этого желает (указал семафоры и очереди).
+        if ( p_st->s_release_long_click != nullptr )
+            USER_OS_GIVE_BIN_SEMAPHORE( *p_st->s_release_long_click );
+        if ( p_st->q_release_long_click != nullptr )
+            USER_OS_QUEUE_SEND( *p_st->q_release_long_click, &p_st->v_release_long_click, 0 );
+        return;
+    }
+    // Если это было короткое нажатие.
+    if ( p_st->s_release_click != nullptr )
+        USER_OS_GIVE_BIN_SEMAPHORE( *p_st->s_release_click );
+    if ( p_st->q_release_click != nullptr )
+        USER_OS_QUEUE_SEND( *p_st->q_release_click, &p_st->v_release_click, 0 );
 }
 
 void buttons_through_shift_register_one_in::task ( void* p_obj ) {
@@ -68,46 +92,12 @@ void buttons_through_shift_register_one_in::task ( void* p_obj ) {
     while ( true ) {
         for ( uint32_t b_l = 0; b_l < o->cfg->pin_count; b_l++ ) {
             o->select_button( b_l );
-            if ( this->check_press() == true ) {
-                this->process_press( b_l );
+            if ( o->check_press() == true ) {
+                o->process_press( b_l );
             } else {
-
+                o->process_not_press( b_l );
             }
         }
         USER_OS_DELAY_MS( o->cfg->delay_ms );
     }
 }
-
-
-
-// Если клавишу отпустили (или была отпущена).
-                if ((button->button_state[button_loop] & BUTTON_STATE_MSK) != 0){    // Если кнопка до этого не была отпущена.
-                    if ((button->button_state[button_loop] & BUTTON_BOUNCE_MSK) != 0){    // Если кнопка проходила проверку на дребезг, но не прошла.
-                        button->button_state[button_loop] = 0;    // Сбрасываем все состояния. Кнопка проверку не прошла.
-                    } else {    // Если проверку состояния мы все-таки прошли.
-                        if ((button->button_state[button_loop] & BUTTOM_EVENT_LONG_CLICK) != 0){        // Если произошло длительное нажатие.
-                            if (button->cfg->pin_conf[button_loop].semaphore_release_long_click != NULL){    // Если по этому событию (длительное нажатие) требуется отдать флаг (он указан), отдаем.
-                                xSemaphoreGive(*button->cfg->pin_conf[button_loop].semaphore_release_long_click);    // Отдаем симафор.
-                            };
-                            if (button->cfg->pin_conf[button_loop].queue_release_release_long_click != NULL){    // Если есть очередь, которая ждет данных.
-                                xQueueSend( *button->cfg->pin_conf[button_loop].queue_release_release_long_click, &button->cfg->pin_conf[button_loop].value_release_release_long_click, portMAX_DELAY );
-                            }
-                            button->button_state[button_loop] = 0;
-                        } else {// Если было, все таки, короткое нажатие.
-                            if (button->cfg->pin_conf[button_loop].semaphore_release_click != NULL){    // Если по этому событию (короткое) требуется отдать флаг (он указан), отдаем.
-                                xSemaphoreGive(*button->cfg->pin_conf[button_loop].semaphore_release_click);    // Отдаем симафор.
-                            };
-                            if (button->cfg->pin_conf[button_loop].queue_release_click != NULL){    // Если есть очередь, которая ждет данных.
-                                xQueueSend( *button->cfg->pin_conf[button_loop].queue_release_click, &button->cfg->pin_conf[button_loop].value_release_click, portMAX_DELAY );
-                            }
-                            button->button_state[button_loop] = 0;
-                        }
-                    }
-                };
-            };
-            button->cfg->point_button_array[button->cfg->pin_conf[button_loop].byte] |= 1<<button->cfg->pin_conf[button_loop].bit;    // Ставим 1 на ножке (возвращаем в исходное положение).
-        };
-
-
-
-*/

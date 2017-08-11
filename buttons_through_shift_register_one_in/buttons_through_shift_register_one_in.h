@@ -41,15 +41,15 @@ struct sr_one_in_button_item_cfg {
           USER_OS_STATIC_QUEUE*               const q_start_long_press;             // Очередь, в которую будет записано значение сразу же, как только пройдет время, после которого кнопка будет считаться удерживаемой долго, но до ее отпускания.
     const uint8_t                             v_start_long_press;
 
-
-    // Кнопку отпустили.
-          USER_OS_STATIC_BIN_SEMAPHORE*       const s_release_click;                // Семафор, который будет отдан сразу же после отпуска кнопки (при коротком). Если указан.
+    // Кнопку отпустили после длительного нажатия.
           USER_OS_STATIC_BIN_SEMAPHORE*       const s_release_long_click;           // Симафор, который будет отдан сразу же, после отпускания кнопки с длительным нажатием.
-          USER_OS_STATIC_BIN_SEMAPHORE*       const s_start_long_press;             // Симафор, который будет отдан сразу же, как только пройдет время, после которого кнопка будет считаться удерживаемой долго, но до ее отпускания.
-          USER_OS_STATIC_QUEUE*               const q_release_click;                // Очередь, в которую будет положено значение сразу же после отпускания кнопки (короткого).
+          USER_OS_STATIC_QUEUE*               const q_release_long_click;           // Очередь, в которую будет записано значение сразу после отпускания (длительного).
+    const uint8_t                             v_release_long_click;
+
+    // Кнопку отпустили после короткого нажатия.
+          USER_OS_STATIC_BIN_SEMAPHORE*       const s_release_click;                // Семафор, который будет отдан сразу же после отпуска кнопки (при коротком). Если указан.
+          USER_OS_STATIC_QUEUE*               const q_release_click;                // Очередь, в которую будет записано значение сразу после отпускания (короткого).
     const uint8_t                             v_release_click;
-          USER_OS_STATIC_QUEUE*               const q_release_release_long_click;   // Очередь, в которую будет записано значение сразу после отпускания (длительного).
-    const uint8_t                             v_release_release_long_click;
 
     sr_one_in_button_status_struct*           status;                               // Статус клавиши (используется внутренней машиной состояний).
 };
