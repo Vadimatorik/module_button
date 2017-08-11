@@ -90,6 +90,9 @@ void buttons_through_shift_register_one_in::process_not_press ( const uint32_t &
 void buttons_through_shift_register_one_in::task ( void* p_obj ) {
     buttons_through_shift_register_one_in* o = ( buttons_through_shift_register_one_in* )p_obj;
     while ( true ) {
+        if ( o->cfg->mutex != nullptr )
+            USER_OS_TAKE_MUTEX( *o->cfg->mutex, portMAX_DELAY );    // sdcard занята нами.
+
         for ( uint32_t b_l = 0; b_l < o->cfg->pin_count; b_l++ ) {
             o->select_button( b_l );
             if ( o->check_press() == true ) {
@@ -98,6 +101,10 @@ void buttons_through_shift_register_one_in::task ( void* p_obj ) {
                 o->process_not_press( b_l );
             }
         }
+
+        if ( o->cfg->mutex != nullptr )
+            USER_OS_GIVE_MUTEX( *o->cfg->mutex );
+
         USER_OS_DELAY_MS( o->cfg->delay_ms );
     }
 }

@@ -63,6 +63,10 @@ struct buttons_through_shift_register_one_in_cfg {
     const uint8_t                     prio;                                         // Приоритет задачи, работающий с кнопками.
           uint8_t*                    const p_button_array;                         // Указатель на первый байт, который используются именно кнопками.
     const uint8_t                     sr_buffer_byte_count;                         // Количество байт, которые уходят буферу кнопок.
+
+    // Данный mutex используется в том случае, если на одном SPI весят несколько устройств.
+    // Он забирается перед CS и возвращается после считывания данных со всхода мк (о нажатии кнопки).
+    USER_OS_STATIC_MUTEX*             const mutex;
 };
 
 class buttons_through_shift_register_one_in {
