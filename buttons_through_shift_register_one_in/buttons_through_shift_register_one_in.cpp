@@ -34,7 +34,6 @@ void buttons_through_shift_register_one_in::process_press ( const uint32_t &b_nu
                 s->bounce_time -= this->cfg->delay_ms;
             } else {                                            // Если время проверки закончилось и, при этом, все это время была зажата, то успех.
                 s->bounce           = false;                                                    // Проверка больше не проводится.
-                s->bounce_time      = 0;                                                        // Сбросим и время.
                 s->event_bounce     = true;                                                     // Говорим, что проверка была успешно пройдена.
 
                 // Информируем пользователя, если он этого желает (указал семафоры и очереди).
@@ -44,29 +43,20 @@ void buttons_through_shift_register_one_in::process_press ( const uint32_t &b_nu
                     USER_OS_QUEUE_SEND( *q_press, &v_press, 0 );                                // Кладем в очеред без ожидания.
             }
         } else {                        // Если проверка на дребезг уже прошла, при этом клавишу еще держат.
+            if ( p_st->dl_delay_ms == 0 ) return;                                               // Если мы не отслеживаем длительное нажатие - выходим.
+            if ( s->event_long_click == true ) return;                                          // Если мы уже отдали флаг о том, что нажатие длительное - выходим.
+            s->button_long_click_time += this->cfg->delay_ms;                                   // Прибавляем время, прошедшее с последней проверки.
+            if ( s->button_long_click_time < p_st->dl_delay_ms ) return;                        // Если прошло времени меньше, чем нужно для того, чтобы кнопка считалась долго зажатой - выходим.
+            s->event_long_click = true;                                                         // Дождались, кнопка долго зажата.
+            // Информируем пользователя, если он этого желает (указал семафоры и очереди).
+            if ( p_st->s_start_long_press != nullptr )
+                USER_OS_GIVE_BIN_SEMAPHORE( *p_st->s_start_long_press );
+            if ( p_st->q_start_long_press != nullptr )
+                USER_OS_QUEUE_SEND( *q_start_long_press, &v_start_long_press, 0 );                                // Кладем в очеред без ожидания.
+
         }
     }
 }
-   else {
-        if (button->cfg->pin_conf[button_loop].flag_dl == 1){    // Если мы отслеживаем длительное нажатие.
-            if (((uint16_t)(button->button_state[button_loop]>>8) + button->cfg->delay >= button->cfg->pin_conf[button_loop].dl_delay_ms) && // Если прошло уже больше времени, чем требуется для "долгого нажатия"
-                    ((button->button_state[button_loop] & BUTTOM_EVENT_LONG_CLICK) == 0)){// И при этом флаг раньше выставлен не был.
-                button->button_state[button_loop] |= BUTTOM_EVENT_LONG_CLICK;    // Выставляем флаг о том, что уже дождались.
-                if (button->cfg->pin_conf[button_loop].semaphore_start_long_press != NULL){    // Если по этому событию (началось длительное нажатие) требуется отдать флаг (он указан), отдаем.
-                    xSemaphoreGive(*button->cfg->pin_conf[button_loop].semaphore_start_long_press);    // Отдаем симафор.
-                };
-                if (button->cfg->pin_conf[button_loop].queue_start_long_press != NULL){    // Если есть очередь, которая ждет данных.
-                    xQueueSend( *button->cfg->pin_conf[button_loop].queue_start_long_press, &button->cfg->pin_conf[button_loop].value_start_long_press, portMAX_DELAY );
-                }
-            } else {
-                uint16_t buffer = (uint16_t)(button->button_state[button_loop]>>8);    // Сохранем прошедшее время.
-                button->button_state[button_loop] &= ~BUTTON_LONG_CLICK_TIME_MSK;    // Сбрасываем то, что было (освобождаем место.
-                button->button_state[button_loop] |= (buffer + button->cfg->delay)<<8;// Добавляем к тому, что было, время с последней проверки.
-            }
-        }
-    }
-
-
 
 // Обработать отпущенную клавишу.
 void buttons_through_shift_register_one_in::process_not_press ( const uint32_t &b_number ) {
