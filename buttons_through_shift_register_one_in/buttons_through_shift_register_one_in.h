@@ -10,7 +10,6 @@
 struct sr_one_in_button_status_struct {
     bool        press;                  // Флаг состояния нажатия до текущей проверки (окончание предыдущей).
     bool        bounce;                 // Флаг состояния проверки на дребезг: true - идет (еще идет), false - пройдена успешно.
-    bool        event_bounce;           // Флаг события "прошла проверку дребезга (была нажата)": true - нажали, false - нет (не прошла проверку на дребезг или была отпущена раньше, чем та завершилась).
     bool        event_long_click;       // Флаг события "произошло длительное нажатие": true - произошло, false - нет.
     uint8_t     bounce_time;            // Оставшееся время до окончания проверки на дребезг (в мс).
     uint16_t    button_long_click_time; // Сколько прошло времени с момента нажатия клавиши (идет начиная с проверки дребезга).
@@ -72,8 +71,8 @@ struct buttons_through_shift_register_one_in_cfg {
 class buttons_through_shift_register_one_in {
 public:
     buttons_through_shift_register_one_in ( buttons_through_shift_register_one_in_cfg* cfg );
-
-    static void task ( void* p_obj );
+            void init ( void );
+    static  void task ( void* p_obj );
 
 private:
     void select_button          ( const uint32_t &b_number );                       // Выбрать нужную кнопку через сдвиговом регистре (подать на ее вывод 0, а на остальные 1).
@@ -89,3 +88,4 @@ private:
     USER_OS_STATIC_STACK_TYPE           task_stack[ BUTTONS_THROUGH_SHIFT_REGISTER_ONE_IN_TASK_STACK_SIZE ] = { 0 };
     USER_OS_STATIC_TASK_STRUCT_TYPE     task_struct;
 };
+

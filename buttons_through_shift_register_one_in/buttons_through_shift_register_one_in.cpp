@@ -1,8 +1,19 @@
 #include "buttons_through_shift_register_one_in.h"
 #include <string.h>
 
-buttons_through_shift_register_one_in::buttons_through_shift_register_one_in ( buttons_through_shift_register_one_in_cfg* cfg ) : cfg( cfg ) {
+buttons_through_shift_register_one_in::buttons_through_shift_register_one_in ( buttons_through_shift_register_one_in_cfg* cfg ) : cfg( cfg ) {}
+
+void buttons_through_shift_register_one_in::init() {
     USER_OS_STATIC_TASK_CREATE( this->task, "b_sr", BUTTONS_THROUGH_SHIFT_REGISTER_ONE_IN_TASK_STACK_SIZE, ( void* )this, this->cfg->prio, this->task_stack, &this->task_struct );
+    uint32_t b_count = this->cfg->pin_count;
+    // Обязательно очищаем поля статуса всех клавиш.
+    for ( uint32_t l = 0; l < b_count; l++ ) {
+        this->cfg->p_pin_conf_array[l].status->press                    = false;
+        this->cfg->p_pin_conf_array[l].status->bounce                   = false;
+        this->cfg->p_pin_conf_array[l].status->event_long_click         = false;
+        this->cfg->p_pin_conf_array[l].status->bounce_time              = 0;
+        this->cfg->p_pin_conf_array[l].status->button_long_click_time   = 0;
+    }
 }
 
 // Выбрать нужную кнопку через сдвиговом регистре (подать на ее вывод 0, а на остальные 1).
@@ -33,8 +44,6 @@ void buttons_through_shift_register_one_in::process_press ( const uint32_t &b_nu
                 s->bounce_time -= this->cfg->delay_ms;
             } else {                                            // Если время проверки закончилось и, при этом, все это время была зажата, то успех.
                 s->bounce           = false;                                                    // Проверка больше не проводится.
-                s->event_bounce     = true;                                                     // Говорим, что проверка была успешно пройдена.
-
                 // Информируем пользователя, если он этого желает (указал семафоры и очереди).
                 if ( p_st->s_press != nullptr )
                     USER_OS_GIVE_BIN_SEMAPHORE( *p_st->s_press );
@@ -62,17 +71,16 @@ void buttons_through_shift_register_one_in::process_not_press ( const uint32_t &
     sr_one_in_button_item_cfg*      p_st    = &this->cfg->p_pin_conf_array[ b_number ];
 
     if ( s->press == false ) return;                                                            // Если она и до этого была отпущена - выходим.
+    s->press = false;
+
     if ( s->bounce == true ) {                                                                  // Если кнопка проходила проверку на дребезг, но не прошла.
-        s->press                    = false;                                                    // Сбрасываем все состояния. Кнопка проверку не прошла.
         s->bounce                   = false;
-        s->event_bounce             = false;
-        s->event_long_click         = false;
-        s->bounce_time              = 0;
-        s->button_long_click_time   = 0;
         return;
     }
+
     // Если проверку состояния мы все-таки прошли.
     if ( s->event_long_click == true ) {                                                        // Если произошло длительное нажатие.
+        s->event_long_click         = false;
         // Информируем пользователя, если он этого желает (указал семафоры и очереди).
         if ( p_st->s_release_long_click != nullptr )
             USER_OS_GIVE_BIN_SEMAPHORE( *p_st->s_release_long_click );
@@ -80,6 +88,7 @@ void buttons_through_shift_register_one_in::process_not_press ( const uint32_t &
             USER_OS_QUEUE_SEND( *p_st->q_release_long_click, &p_st->v_release_long_click, 0 );
         return;
     }
+
     // Если это было короткое нажатие.
     if ( p_st->s_release_click != nullptr )
         USER_OS_GIVE_BIN_SEMAPHORE( *p_st->s_release_click );
