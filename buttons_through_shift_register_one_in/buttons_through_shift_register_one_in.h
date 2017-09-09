@@ -81,7 +81,6 @@ private:
     void process_press          ( const uint32_t &b_number );                       // Обработка клавиши в случае, если она в данный момент нажата.
     void process_not_press      ( const uint32_t &b_number );                       // Если отпущена.
 
-
     const buttons_through_shift_register_one_in_cfg*    const cfg;
 
     // Для создания задачи.

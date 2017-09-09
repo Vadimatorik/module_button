@@ -78,6 +78,9 @@ void buttons_through_shift_register_one_in::process_not_press ( const uint32_t &
         return;
     }
 
+    s->bounce_time              = 0;
+    s->button_long_click_time   = 0;
+
     // Если проверку состояния мы все-таки прошли.
     if ( s->event_long_click == true ) {                                                        // Если произошло длительное нажатие.
         s->event_long_click         = false;
