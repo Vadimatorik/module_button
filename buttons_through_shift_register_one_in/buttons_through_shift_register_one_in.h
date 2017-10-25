@@ -1,6 +1,6 @@
 #pragma once
 
-#include "mk_hardware_interfaces_pin.h"
+#include "mc_hardware_interfaces_pin.h"
 #include "module_shift_register.h"
 #include "user_os.h"
 
