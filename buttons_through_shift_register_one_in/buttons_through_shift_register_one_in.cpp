@@ -8,11 +8,11 @@ void buttons_through_shift_register_one_in::init() {
     uint32_t b_count = this->cfg->pin_count;
     // Обязательно очищаем поля статуса всех клавиш.
     for ( uint32_t l = 0; l < b_count; l++ ) {
-        this->cfg->p_pin_conf_array[l].status->press                    = false;
-        this->cfg->p_pin_conf_array[l].status->bounce                   = false;
-        this->cfg->p_pin_conf_array[l].status->event_long_click         = false;
-        this->cfg->p_pin_conf_array[l].status->bounce_time              = 0;
-        this->cfg->p_pin_conf_array[l].status->button_long_click_time   = 0;
+		this->cfg->p_pin_conf_array[ l ].status->press                    = false;
+		this->cfg->p_pin_conf_array[ l ].status->bounce                   = false;
+		this->cfg->p_pin_conf_array[ l ].status->event_long_click         = false;
+		this->cfg->p_pin_conf_array[ l ].status->bounce_time              = 0;
+		this->cfg->p_pin_conf_array[ l ].status->button_long_click_time   = 0;
     }
 }
 
