@@ -1,27 +1,29 @@
 #include "buttons_through_shift_register_one_input_pin.h"
 
+#ifdef MODULE_BUTTONS_THROUGH_SHIFT_REGISTER_ONE_INPUT_PIN_ENABLED
+
 #include <string.h>
 
 ButtonsThroughShiftRegisterOneInputPin::ButtonsThroughShiftRegisterOneInputPin ( ButtonsThroughShiftRegisterOneInputPinCfg* cfg ) : cfg( cfg ) {}
 
 void ButtonsThroughShiftRegisterOneInputPin::init() {
-	USER_OS_STATIC_TASK_CREATE( this->task, "b_sr", BUTTONS_THROUGH_SHIFT_REGISTER_ONE_IN_TASK_STACK_SIZE, ( void* )this, this->cfg->prio, this->task_stack, &this->task_struct );
+	USER_OS_STATIC_TASK_CREATE( this->task, "b_sr", BUTTONS_THROUGH_SHIFT_REGISTER_ONE_IN_TASK_STACK_SIZE, ( void* )this, this->cfg->prio, this->taskStack, &this->taskStruct );
 	uint32_t b_count = this->cfg->pinCount;
 	// Обязательно очищаем поля статуса всех клавиш.
 	for ( uint32_t l = 0; l < b_count; l++ ) {
 		this->cfg->pinCfgArray[ l ].status->press					= false;
 		this->cfg->pinCfgArray[ l ].status->bounce					= false;
-		this->cfg->pinCfgArray[ l ].status->eventLongClick		 = false;
+		this->cfg->pinCfgArray[ l ].status->eventLongClick			= false;
 		this->cfg->pinCfgArray[ l ].status->bounceTime				= 0;
-		this->cfg->pinCfgArray[ l ].status->buttonLongClickTime	= 0;
+		this->cfg->pinCfgArray[ l ].status->buttonLongClickTime		= 0;
 	}
 }
 
 // Выбрать нужную кнопку через сдвиговом регистре (подать на ее вывод 0, а на остальные 1).
-void ButtonsThroughShiftRegisterOneInputPin::selectButton ( const uint32_t &b_number ) {		// Значение b_number можно не проверять, т.к. это внутренний метод и на уровне выше уже проверено.
+void ButtonsThroughShiftRegisterOneInputPin::selectButton ( const uint32_t &bNumber ) {		// Значение bNumber можно не проверять, т.к. это внутренний метод и на уровне выше уже проверено.
 	memset( this->cfg->pointingButtonArray, 0, this->cfg->srBufferByteCount );					// Не опрашиваемые в данный момент кнопки == 0.
-	this->cfg->pointingButtonArray[ this->cfg->pinCfgArray[ b_number ].byte ] |=
-		1 << this->cfg->pinCfgArray[ b_number ].bit;										// Ставим 1 на ножке (т.к. вывод подтянут к 0, то при нажатой клавише мы сразу полочим 1 на входе).
+	this->cfg->pointingButtonArray[ this->cfg->pinCfgArray[ bNumber ].byte ] |=
+		1 << this->cfg->pinCfgArray[ bNumber ].bit;											// Ставим 1 на ножке (т.к. вывод подтянут к 0, то при нажатой клавише мы сразу полочим 1 на входе).
 	this->cfg->srObj->write();																	// Перезаписываем все в сдвиговом регистре.
 }
 
@@ -31,9 +33,9 @@ bool ButtonsThroughShiftRegisterOneInputPin::checkPress ( void ) {
 }
 
 // Обработать нажатую клавишу.
-void ButtonsThroughShiftRegisterOneInputPin::processPress ( const uint32_t &b_number ) {
-	srOneInButtonStatusStruct* s		= this->cfg->pinCfgArray[ b_number ].status; // Для удобства записи.
-	sr_one_in_button_item_cfg*		p_st	= &this->cfg->pinCfgArray[ b_number ];
+void ButtonsThroughShiftRegisterOneInputPin::processPress ( const uint32_t &bNumber ) {
+	srOneInButtonStatusStruct* s		= this->cfg->pinCfgArray[ bNumber ].status; // Для удобства записи.
+	sr_one_in_button_item_cfg*		p_st	= &this->cfg->pinCfgArray[ bNumber ];
 
 	if ( s->press == false ) {	// Если до этого момента кнопка была сброшена.
 		s->press		= true;																 // Показываем, что нажатие произошло.
@@ -67,9 +69,9 @@ void ButtonsThroughShiftRegisterOneInputPin::processPress ( const uint32_t &b_nu
 }
 
 // Обработать отпущенную клавишу.
-void ButtonsThroughShiftRegisterOneInputPin::processNotPress ( const uint32_t &b_number ) {
-	srOneInButtonStatusStruct* s		= this->cfg->pinCfgArray[ b_number ].status;
-	sr_one_in_button_item_cfg*		p_st	= &this->cfg->pinCfgArray[ b_number ];
+void ButtonsThroughShiftRegisterOneInputPin::processNotPress ( const uint32_t &bNumber ) {
+	srOneInButtonStatusStruct* s		= this->cfg->pinCfgArray[ bNumber ].status;
+	sr_one_in_button_item_cfg*		p_st	= &this->cfg->pinCfgArray[ bNumber ];
 
 	if ( s->press == false ) return;															// Если она и до этого была отпущена - выходим.
 	s->press = false;
@@ -121,3 +123,5 @@ void ButtonsThroughShiftRegisterOneInputPin::task ( void* p_obj ) {
 		USER_OS_DELAY_MS( o->cfg->delayMs );
 	}
 }
+
+#endif
