@@ -38,9 +38,9 @@ void ButtonsThroughShiftRegisterOneInputPin::processPress ( const uint32_t &bNum
 	sr_one_in_button_item_cfg*		p_st	= &this->cfg->pinCfgArray[ bNumber ];
 
 	if ( s->press == false ) {	// Если до этого момента кнопка была сброшена.
-		s->press		= true;																 // Показываем, что нажатие произошло.
-		s->bounce		= true;																 // Начинаем проверку на дребезг.
-		s->bounceTime	= p_st->stabildDelayMs;														// Устанавливаем время для проверки дребезга контактов.
+		s->press		= true;																// Показываем, что нажатие произошло.
+		s->bounce		= true;																// Начинаем проверку на дребезг.
+		s->bounceTime	= p_st->stabildDelayMs;												// Устанавливаем время для проверки дребезга контактов.
 	} else {					// Если мы уже некоторое время держим эту кнопку.
 		if ( s->bounce == true ) {		// Если идет проверка на дребезг.
 			if ( s->bounceTime - this->cfg->delayMs > 0 ) {	// Если время проверки еще не закончилось (мы от оставшегося времени отнимаем время, прошедшее с предыдущей проверки).
