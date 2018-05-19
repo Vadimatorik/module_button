@@ -6,7 +6,7 @@
 #include "mc_hardware_interfaces_pin.h"
 #include "user_os.h"
 
-#define BUTTONS_THROUGH_SHIFT_REGISTER_ONE_IN_TASK_STACK_SIZE		100
+#define BUTTONS_THROUGH_SHIFT_REGISTER_ONE_IN_TASK_STACK_SIZE		400
 
 // Флаги состояния клавиши (одной).
 struct srOneInButtonStatusStruct {
