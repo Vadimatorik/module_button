@@ -1,5 +1,7 @@
-#include "buttons_core.h"
+#include "buttons_base.h"
 #include <string.h>
+
+#ifdef MODULE_BUTTONS_BASE
 
 namespace button {
 
@@ -153,3 +155,5 @@ void base::task (void *obj) {
 }
     
 }
+
+#endif

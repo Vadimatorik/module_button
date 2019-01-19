@@ -1,6 +1,9 @@
 #pragma once
 
-#include "user_os.h"
+#include "user_os.h" // Прослойка между методами конкретной операционной системы пользователя.
+#include "project_config.h" // Файл с разрешением на компиляцию данного блока.
+
+#ifdef MODULE_BUTTONS_BASE
 
 namespace button {
 
@@ -223,3 +226,5 @@ private:
 };
 
 }
+
+#endif

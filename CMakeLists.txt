@@ -25,20 +25,24 @@ if (NOT DEFINED ${PROJECT_NAME}_COMPILER_FLAGS)
              "The value of the variable <<${PROJECT_NAME}_COMPILER_FLAGS>> is not specified!")
 endif ()
 
-# Для сборки проекта BUTTONS требуется обязательно указать путь
-# до папки с файлом конфигурации библиотеки BUTTONS в проекте
-# пользователя (в корневом CMakeList).
-# Пример:
-# SET (BUTTONS_CFG_H_PATH ${CMAKE_SOURCE_DIR}/cfg)
-if (NOT DEFINED ${PROJECT_NAME}_CFG_H_PATH)
+# Путь до файла user_os.h с прослойками под конкретную операционную систему.
+# Должен быть обязательно указан.
+if (NOT DEFINED USER_OS_H_PATH)
     message (FATAL_ERROR
-             "The value of the variable <<${PROJECT_NAME}_CFG_H_PATH>> is not specified!")
+            "The value of the variable <<USER_OS_H_PATH>> is not specified!")
 endif()
 
+# Путь к заголовочным файлам операционной системы.
+if (NOT DEFINED USER_OS_PATH)
+    message (FATAL_ERROR
+            "The value of the variable <<USER_OS_PATH>> is not specified!")
+endif()
+
+# Для сборки требуется:
 include_directories(
-    # .
-    ${USER_OS_H_PATH}
-    ${${PROJECT_NAME}_CFG_H_PATH}
+    ${${PROJECT_NAME}_CFG_H_PATH} # 1. Путь до файла с разрешающим компиляцию данного файла объявлением.
+    ${USER_OS_H_PATH} # 2. Путь до файла user_os с прослойками под конкретную операционную систему.
+    ${USER_OS_PATH} # 3. Путь к заголовочным файлам операционной системы.
     ${CMAKE_CURRENT_SOURCE_DIR}/buttons_core/inc
 )
 
