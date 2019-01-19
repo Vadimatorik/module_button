@@ -4,8 +4,6 @@
 
 namespace button {
 
-#define BUTTON_BASE_TASK_STACK_SIZE 200
-
 /*!
  * Данная структура описывает механизм
  * поведения в случае возникновения
@@ -40,7 +38,7 @@ struct event {
  * Флаги состояния  одной клавиши.
  * Структура является системной.
  */
-struct Status {
+struct status {
     /*!
      * Флаг состояния нажатия до текущей проверки (окончание предыдущей).
      */
@@ -56,21 +54,21 @@ struct Status {
      * Флаг события "произошло длительное нажатие":
      * true - произошло, false - нет.
      */
-    bool eventLongClick;
+    bool event_long_click;
     
     /*!
      * Оставшееся время до окончания проверки на дребезг (в мс).
      */
-    uint32_t bounceTime;
+    uint32_t bounce_time;
     
     /*!
      * Сколько прошло времени с момента нажатия клавиши
      * (идет начиная с проверки дребезга).
      */
-    uint32_t buttonLongClickTime;
+    uint32_t button_long_click_time;
 };
 
-struct OneButtonCfg {
+struct one_button_cfg {
     /*!
      * Уникальный идентификатор клавиши.
      * При обращении к физическому уровню
@@ -90,7 +88,7 @@ struct OneButtonCfg {
      * нажатия (защита от дребезга).
      * Указывается в миллисекундах.
      */
-    uint8_t stabilizationTimeMs;
+    uint8_t stabilization_time_ms;
     
     /*!
      * Отслеживание долгого нажатия.
@@ -100,7 +98,7 @@ struct OneButtonCfg {
      * Если тут 0, то долгое нажатие
      * не детектируется.
      */
-    uint8_t longPressDetectionTimeS;
+    uint8_t long_press_detection_time_sec;
     
     /*!
      * Кнопку нажали (прошла проверку дребезга).
@@ -131,29 +129,29 @@ struct OneButtonCfg {
      * нажатия будет выдано событие
      * click.
      */
-    button::event longClick;
+    button::event long_click;
 };
 
-struct BaseCfg {
+struct base_cfg {
     /*!
      * Пауза между опросами всех кнопок.
      */
-    uint8_t taskDelayMs;
+    uint8_t task_delay_ms;
     
     /*!
      * Приоритет задачи, работающий с кнопками.
      */
-    uint8_t taskPrio;
+    uint8_t task_prio;
     
     /*!
      * Массив конфигураций клавиш.
      */
-    OneButtonCfg *cfgArray;
+    one_button_cfg *cfg_array;
     
     /*!
      * Количество кнопок (размер массива).
      */
-    uint8_t cfgArraySize;
+    uint8_t cfg_array_size;
     
     /*!
      * Метод возвращает текущее состояние
@@ -162,12 +160,12 @@ struct BaseCfg {
      * полученное из структуры конфигурации
      * кнопки (поле id).
      */
-    bool (*getButtonState) (uint8_t id);
+    bool (*get_button_state) (uint8_t id);
 };
 
-class Base {
+class base {
 public:
-    Base (const BaseCfg *const cfg);
+    base (const base_cfg *const cfg);
 
 private:
     static void task (void *obj);
@@ -177,21 +175,24 @@ private:
      *`Обработка клавиши в случае,
      *`если клавиша в данный момент нажата.
      */
-    void processPress (uint32_t bNumber);
+    void process_press (uint32_t b_number);
     
     /*!
      * бработка клавиши в случае,
      * если клавиша в данный момент отпущена.
      */
-    void processNotPress (uint32_t bNumber);
+    void process_not_press (uint32_t b_number);
 
 private:
-    USER_OS_STATIC_STACK_TYPE taskStack[BUTTON_BASE_TASK_STACK_SIZE] = {0};
-    USER_OS_STATIC_TASK_STRUCT_TYPE taskStruct;
+    const base_cfg *const cfg;
+    status *s;
 
 private:
-    const BaseCfg *const cfg;
-    Status *s;
+    const static uint32_t TASK_STACK_SIZE = 200;
+
+private:
+    USER_OS_STATIC_STACK_TYPE task_stack[button::base::TASK_STACK_SIZE];
+    USER_OS_STATIC_TASK_STRUCT_TYPE task_struct;
     
 };
 

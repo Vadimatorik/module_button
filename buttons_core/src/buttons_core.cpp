@@ -3,37 +3,38 @@
 
 namespace button {
 
-Base::Base (const BaseCfg *const cfg) : cfg(cfg) {
+base::base (const base_cfg *const cfg) :
+    cfg(cfg) {
     USER_OS_STATIC_TASK_CREATE(this->task,
                                "ButtonBase",
-                               BUTTON_BASE_TASK_STACK_SIZE,
+                               TASK_STACK_SIZE,
                                this,
-                               this->cfg->taskPrio,
-                               this->taskStack,
-                               &this->taskStruct);
+                               this->cfg->task_prio,
+                               this->task_stack,
+                               &this->task_struct);
     
-    this->s = new Status[this->cfg->cfgArraySize];
-    memset(this->s, 0, sizeof(button::Status) * this->cfg->cfgArraySize);
+    this->s = new status[this->cfg->cfg_array_size];
+    memset(this->s, 0, sizeof(button::status) * this->cfg->cfg_array_size);
 }
 
-void Base::processPress (uint32_t bNumber) {
+void base::process_press (uint32_t b_number) {
     // Сократим запись заранее полученным указателем.
-    Status *s = &this->s[bNumber];
-    OneButtonCfg *p_st = &this->cfg->cfgArray[bNumber];
+    status *s = &this->s[b_number];
+    one_button_cfg *p_st = &this->cfg->cfg_array[b_number];
     
     //. Если до этого момента кнопка была сброшена.
     if (s->press == false) {
         s->press = true; // Показываем, что нажатие произошло.
         s->bounce = true; // Начинаем проверку на дребезг.
-        s->bounceTime = p_st->stabilizationTimeMs; // Устанавливаем время для проверки дребезга контактов.
+        s->bounce_time = p_st->stabilization_time_ms; // Устанавливаем время для проверки дребезга контактов.
     } else { // Если мы уже некоторое время держим эту кнопку.
         if (s->bounce == true) { // Если идет проверка на дребезг.
-            if (s->bounceTime - this->cfg->taskDelayMs > 0) { /*
+            if (s->bounce_time - this->cfg->task_delay_ms > 0) { /*
                                                                * Если время проверки еще не закончилось
                                                                * (мы от оставшегося времени отнимаем время,
                                                                * прошедшее с предыдущей проверки).
                                                                */
-                s->bounceTime -= this->cfg->taskDelayMs;
+                s->bounce_time -= this->cfg->task_delay_ms;
             } else { // Если время проверки закончилось и, при этом, все это время была зажата, то успех.
                 s->bounce = false; // Проверка больше не проводится.
                 // Информируем пользователя, если он этого желает
@@ -49,24 +50,24 @@ void Base::processPress (uint32_t bNumber) {
         } else { /*
                   * Если проверка на дребезг уже прошла, при этом клавишу еще держат.
                   */
-            if (p_st->longPressDetectionTimeS == 0) { // Если мы не отслеживаем длительное нажатие - выходим.
+            if (p_st->long_press_detection_time_sec == 0) { // Если мы не отслеживаем длительное нажатие - выходим.
                 return;
             }
             
-            if (s->eventLongClick == true) // Если мы уже отдали флаг о том, что нажатие длительное - выходим.
+            if (s->event_long_click == true) // Если мы уже отдали флаг о том, что нажатие длительное - выходим.
                 return;
             
-            s->buttonLongClickTime += this->cfg->taskDelayMs; // Прибавляем время, прошедшее с последней проверки.
+            s->button_long_click_time += this->cfg->task_delay_ms; // Прибавляем время, прошедшее с последней проверки.
             
             /*
              * Если прошло времени меньше, чем нужно для того, чтобы кнопка
              * считалась долго зажатой - выходим.
              */
-            if (s->buttonLongClickTime < p_st->longPressDetectionTimeS * 1000) {
+            if (s->button_long_click_time < p_st->long_press_detection_time_sec * 1000) {
                 return;
             }
             
-            s->eventLongClick = true; // Дождались, кнопка долго зажата.
+            s->event_long_click = true; // Дождались, кнопка долго зажата.
             
             // Информируем пользователя, если он этого желает (указал семафоры и очереди).
             if (p_st->longPress.s != nullptr) {
@@ -80,9 +81,9 @@ void Base::processPress (uint32_t bNumber) {
     }
 }
 
-void Base::processNotPress (uint32_t bNumber) {
-    Status *s = &this->s[bNumber];
-    OneButtonCfg *p_st = &this->cfg->cfgArray[bNumber];
+void base::process_not_press (uint32_t b_number) {
+    status *s = &this->s[b_number];
+    one_button_cfg *p_st = &this->cfg->cfg_array[b_number];
     
     if (s->press == false) {
         return; // Если она и до этого была отпущена - выходим.
@@ -94,19 +95,19 @@ void Base::processNotPress (uint32_t bNumber) {
         return;
     }
     
-    s->bounceTime = 0;
-    s->buttonLongClickTime = 0;
+    s->bounce_time = 0;
+    s->button_long_click_time = 0;
     
     // Если проверку состояния мы все-таки прошли.
-    if (s->eventLongClick == true) { // Если произошло длительное нажатие.
-        s->eventLongClick = false;
+    if (s->event_long_click == true) { // Если произошло длительное нажатие.
+        s->event_long_click = false;
         
-        if (p_st->longClick.s != nullptr) {
-            USER_OS_GIVE_BIN_SEMAPHORE(*p_st->longClick.s);
+        if (p_st->long_click.s != nullptr) {
+            USER_OS_GIVE_BIN_SEMAPHORE(*p_st->long_click.s);
         }
         
-        if (p_st->longClick.q != nullptr) {
-            USER_OS_QUEUE_SEND(*p_st->longClick.q, &p_st->longClick.v, 0);
+        if (p_st->long_click.q != nullptr) {
+            USER_OS_QUEUE_SEND(*p_st->long_click.q, &p_st->long_click.v, 0);
         }
     }
     
@@ -120,22 +121,22 @@ void Base::processNotPress (uint32_t bNumber) {
     }
 }
 
-void Base::task (void *obj) {
-    button::Base *o = reinterpret_cast<button::Base *>(obj);
+void base::task (void *obj) {
+    button::base *o = reinterpret_cast<button::base *>(obj);
     
     while (true) {
-        for (uint32_t i = 0; i < o->cfg->cfgArraySize; i++) {
+        for (uint32_t i = 0; i < o->cfg->cfg_array_size; i++) {
             bool buttonState;
-            buttonState = o->cfg->getButtonState(o->cfg->cfgArray[i].id);
+            buttonState = o->cfg->get_button_state(o->cfg->cfg_array[i].id);
             
             if (buttonState == true) {
-                o->processPress(i);
+                o->process_press(i);
             } else {
-                o->processNotPress(i);
+                o->process_not_press(i);
             }
         }
         
-        USER_OS_DELAY_MS(o->cfg->taskDelayMs);
+        USER_OS_DELAY_MS(o->cfg->task_delay_ms);
     }
 }
     
