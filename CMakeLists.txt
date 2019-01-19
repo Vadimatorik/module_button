@@ -38,6 +38,16 @@ if (NOT DEFINED USER_OS_PATH)
             "The value of the variable <<USER_OS_PATH>> is not specified!")
 endif()
 
+# Для сборки проекта BUTTONS требуется обязательно указать путь
+# до папки с файлом конфигурации библиотеки BUTTONS в проекте
+# пользователя (в корневом CMakeList).
+# Пример:
+# SET (BUTTONS_CFG_H_PATH ${CMAKE_SOURCE_DIR}/cfg)
+if (NOT DEFINED ${PROJECT_NAME}_CFG_H_PATH)
+    message (FATAL_ERROR
+            "The value of the variable <<${PROJECT_NAME}_CFG_H_PATH>> is not specified!")
+endif()
+
 # Для сборки требуется:
 include_directories(
     ${${PROJECT_NAME}_CFG_H_PATH} # 1. Путь до файла с разрешающим компиляцию данного файла объявлением.
