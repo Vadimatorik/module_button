@@ -119,7 +119,7 @@ struct one_button_cfg {
      * Кнопку держат дольше
      * longPressDetectionTimeS.
      */
-    button::event longPress;
+    button::event long_press;
     
     /*!
      * Кнопку отпустили после того, как
@@ -183,6 +183,32 @@ private:
      */
     void process_not_press (uint32_t b_number);
 
+    /*!
+     * Метод производит отправку сообщения в очередь
+     * и/или выдачу семафора по событию: клавиша была нажата.
+     */
+    void send_message_event_press (one_button_cfg *p_st);
+    
+    /*!
+     * Метод производит отправку сообщения в очередь и/или
+     * выдачу семафора по событию: зафиксировано долгое нажатие.
+     */
+    void send_message_event_long_press (one_button_cfg *p_st);
+    
+    /*!
+     * Метод производит отправку сообщения в очередь и/или выдачу
+     * семафора по событию: произошел отпуск клавиши после того,
+     * как было зафиксировано долгое нажатие
+     */
+    void send_message_event_long_click (one_button_cfg *p_st);
+    
+    /*!
+     * Метод производит отправку сообщения в очередь и/или выдачу
+     * семафора по событию: произошел отпуск клавиши до того,
+     * как было зафиксировано длительное нажатие
+     */
+    void send_message_event_click (one_button_cfg *p_st);
+    
 private:
     const base_cfg *const cfg;
     status *s;

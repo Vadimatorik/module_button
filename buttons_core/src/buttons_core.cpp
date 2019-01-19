@@ -17,6 +17,46 @@ base::base (const base_cfg *const cfg) :
     memset(this->s, 0, sizeof(button::status) * this->cfg->cfg_array_size);
 }
 
+void base::send_message_event_press (one_button_cfg *p_st) {
+    if (p_st->press.s != nullptr) {
+        USER_OS_GIVE_BIN_SEMAPHORE(*p_st->press.s);
+    }
+    
+    if (p_st->press.q != nullptr) {
+        USER_OS_QUEUE_SEND(*p_st->press.q, &p_st->press.v, 0);
+    }
+}
+
+void base::send_message_event_long_press (one_button_cfg *p_st) {
+    if (p_st->long_press.s != nullptr) {
+        USER_OS_GIVE_BIN_SEMAPHORE(*p_st->long_press.s);
+    }
+    
+    if (p_st->long_press.q != nullptr) {
+        USER_OS_QUEUE_SEND(*p_st->long_press.q, &p_st->long_press.v, 0);
+    }
+}
+
+void base::send_message_event_long_click (one_button_cfg *p_st) {
+    if (p_st->long_click.s != nullptr) {
+        USER_OS_GIVE_BIN_SEMAPHORE(*p_st->long_click.s);
+    }
+    
+    if (p_st->long_click.q != nullptr) {
+        USER_OS_QUEUE_SEND(*p_st->long_click.q, &p_st->long_click.v, 0);
+    }
+}
+
+void base::send_message_event_click (one_button_cfg *p_st) {
+    if (p_st->click.s != nullptr) {
+        USER_OS_GIVE_BIN_SEMAPHORE(*p_st->click.s);
+    }
+    
+    if (p_st->click.q != nullptr) {
+        USER_OS_QUEUE_SEND(*p_st->click.q, &p_st->click.v, 0);
+    }
+}
+
 void base::process_press (uint32_t b_number) {
     // Сократим запись заранее полученным указателем.
     status *s = &this->s[b_number];
@@ -37,15 +77,7 @@ void base::process_press (uint32_t b_number) {
                 s->bounce_time -= this->cfg->task_delay_ms;
             } else { // Если время проверки закончилось и, при этом, все это время была зажата, то успех.
                 s->bounce = false; // Проверка больше не проводится.
-                // Информируем пользователя, если он этого желает
-                // (указал семафоры и очереди).
-                if (p_st->press.s != nullptr) {
-                    USER_OS_GIVE_BIN_SEMAPHORE(*p_st->press.s);
-                }
-                
-                if (p_st->press.q != nullptr) {
-                    USER_OS_QUEUE_SEND(*p_st->press.q, &p_st->press.v, 0);
-                }
+                this->send_message_event_press(p_st);
             }
         } else { /*
                   * Если проверка на дребезг уже прошла, при этом клавишу еще держат.
@@ -68,15 +100,7 @@ void base::process_press (uint32_t b_number) {
             }
             
             s->event_long_click = true; // Дождались, кнопка долго зажата.
-            
-            // Информируем пользователя, если он этого желает (указал семафоры и очереди).
-            if (p_st->longPress.s != nullptr) {
-                USER_OS_GIVE_BIN_SEMAPHORE(*p_st->longPress.s);
-            }
-            
-            if (p_st->longPress.q != nullptr) {
-                USER_OS_QUEUE_SEND(*p_st->longPress.q, &p_st->longPress.v, 0);
-            }
+            this->send_message_event_long_press(p_st);
         }
     }
 }
@@ -88,6 +112,7 @@ void base::process_not_press (uint32_t b_number) {
     if (s->press == false) {
         return; // Если она и до этого была отпущена - выходим.
     }
+    
     s->press = false;
     
     if (s->bounce == true) { // Если кнопка проходила проверку на дребезг, но не прошла.
@@ -102,23 +127,10 @@ void base::process_not_press (uint32_t b_number) {
     if (s->event_long_click == true) { // Если произошло длительное нажатие.
         s->event_long_click = false;
         
-        if (p_st->long_click.s != nullptr) {
-            USER_OS_GIVE_BIN_SEMAPHORE(*p_st->long_click.s);
-        }
-        
-        if (p_st->long_click.q != nullptr) {
-            USER_OS_QUEUE_SEND(*p_st->long_click.q, &p_st->long_click.v, 0);
-        }
+        this->send_message_event_long_click(p_st);
     }
     
-    // Если это было короткое нажатие.
-    if (p_st->click.s != nullptr) {
-        USER_OS_GIVE_BIN_SEMAPHORE(*p_st->click.s);
-    }
-    
-    if (p_st->click.q != nullptr) {
-        USER_OS_QUEUE_SEND(*p_st->click.q, &p_st->click.v, 0);
-    }
+    this->send_message_event_click(p_st);
 }
 
 void base::task (void *obj) {
