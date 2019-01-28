@@ -217,7 +217,7 @@ private:
     status *s;
 
 private:
-    const static uint32_t TASK_STACK_SIZE = 200;
+    const static uint32_t TASK_STACK_SIZE = 400;
 
 private:
     USER_OS_STATIC_STACK_TYPE task_stack[button::base::TASK_STACK_SIZE];
